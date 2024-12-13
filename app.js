@@ -96,16 +96,23 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
             // Fonction pour afficher les cases du tableau en utilisant les indices
             function showTableCells(word) {
-                if (wordIndices[word] && !motTrouves.includes(word)) {
+                const lowerCaseWord = word.toLowerCase();
+                const lowerCaseWordIndices = Object.keys(wordIndices).reduce((acc, key) => {
+                    acc[key.toLowerCase()] = key;
+                    return acc;
+                }, {});
+
+                if (lowerCaseWordIndices[lowerCaseWord] && !motTrouves.includes(lowerCaseWord)) {
+                    const originalWord = lowerCaseWordIndices[lowerCaseWord];
                     let firstTR = document.getElementById('firstRow');
-                    wordIndices[word].forEach((indices) => {
+                    wordIndices[originalWord].forEach((indices) => {
                         let col = indices[0];
                         let row = indices[1];
                         let cell = firstTR.children[col].children[row];
                         cell.children[0].style.display = 'table-cell';
-                        cell.children[0].textContent = word;
+                        cell.children[0].textContent = originalWord;
                         wordToShowInput.value = '';
-                        motTrouves.push(word);
+                        motTrouves.push(lowerCaseWord);
                     });
                 }
             }
