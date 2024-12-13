@@ -21,9 +21,15 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             table.appendChild(tbody);
             document.body.appendChild(table);
 
+            // Appliquer les styles pour centrer le tableau et ajouter des bordures
+            table.style.margin = '0 auto';
+            table.style.borderCollapse = 'collapse';
+            table.style.width = '80%';
+
             // Initialisation des variables pour gérer les colonnes
             let currentColumn = document.createElement('td');
             const firstRow = document.createElement('tr');
+            firstRow.id = 'firstRow';
             firstRow.appendChild(currentColumn);
             tbody.appendChild(firstRow);
 
@@ -38,6 +44,11 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
                 cell.textContent = word;
+                cell.style.display = 'none'; // Masquer le mot initialement
+                cell.style.border = '1px solid black'; // Ajouter une bordure aux cellules
+                cell.style.padding = '5px'; // Ajouter du padding aux cellules
+
+                console.log('Word:', cell.textContent);
 
                 // Ajouter la ligne à la colonne actuelle
                 row.appendChild(cell);
@@ -63,19 +74,39 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
             console.log('wordIndices:', wordIndices);
 
-            // Fonction pour modifier les cases du tableau en utilisant les indices
-            function modifyTableCells(word, newText) {
+            // Fonction pour afficher les cases du tableau en utilisant les indices
+            function showTableCells(word) {
                 if (wordIndices[word]) {
-                    wordIndices[word].forEach(index => {
-                        const cell = tbody.querySelectorAll('td')[index+1];
-                        if (cell) {
-                            cell.textContent = newText;
+                    let tr = document.getElementById('firstRow');
+                    for (let i = 0; i < tr.children.length; i++) {
+                        let td = tr.children[i];
+                        for (let j = 0; j < td.children.length; j++) {
+                            let cell = td.children[j];
+                            if(cell.textContent === word) {
+                                cell.children[0].style.display = 'table-cell';
+                                console.log('FIIIIIIIIIIIIIND');
+                            }
                         }
-                    });
+                    }
                 }
             }
 
-            // Exemple d'utilisation
-            modifyTableCells('puis', 'nouveau texte');
+            // Ajouter le champ de saisie pour le mot à afficher
+            const inputContainer = document.createElement('div');
+            const wordToShowInput = document.createElement('input');
+            wordToShowInput.setAttribute('type', 'text');
+            wordToShowInput.setAttribute('placeholder', 'Mot à afficher');
+            const showButton = document.createElement('button');
+            showButton.textContent = 'Afficher le mot';
+
+            inputContainer.appendChild(wordToShowInput);
+            inputContainer.appendChild(showButton);
+            document.body.appendChild(inputContainer);
+
+            // Ajouter un écouteur d'événement pour le bouton d'affichage
+            showButton.addEventListener('click', () => {
+                const wordToShow = wordToShowInput.value;
+                showTableCells(wordToShow);
+            });
         });
 });
