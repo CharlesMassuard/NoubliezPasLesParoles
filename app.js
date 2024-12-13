@@ -30,7 +30,10 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             let columnHeight = 0;
             const maxHeight = window.innerHeight - 100; // Réduction pour tenir compte des marges
 
-            words.forEach((word) => {
+            // Dictionnaire pour stocker les indices des mots
+            let wordIndices = {};
+
+            words.forEach((word, index) => {
                 // Créer une ligne et y ajouter un mot
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
@@ -39,6 +42,12 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                 // Ajouter la ligne à la colonne actuelle
                 row.appendChild(cell);
                 currentColumn.appendChild(row);
+
+                // Ajouter l'indice de la case au dictionnaire
+                if (!wordIndices[word]) {
+                    wordIndices[word] = [];
+                }
+                wordIndices[word].push(index);
 
                 // Obtenir la hauteur réelle après l'ajout
                 const rowHeight = row.offsetHeight || 20; // Fallback si `offsetHeight` est 0
@@ -52,15 +61,21 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                 }
             });
 
-            // Ajout de styles pour un meilleur rendu
-            table.style.borderCollapse = 'collapse';
-            table.style.margin = 'auto';
-            table.querySelectorAll('td').forEach(td => {
-                td.style.padding = '5px';
-                td.style.border = '1px solid #ddd';
-            });
-        })
-        .catch(error => {
-            console.error('Erreur lors de la récupération des données:', error);
+            console.log('wordIndices:', wordIndices);
+
+            // Fonction pour modifier les cases du tableau en utilisant les indices
+            function modifyTableCells(word, newText) {
+                if (wordIndices[word]) {
+                    wordIndices[word].forEach(index => {
+                        const cell = tbody.querySelectorAll('td')[index+1];
+                        if (cell) {
+                            cell.textContent = newText;
+                        }
+                    });
+                }
+            }
+
+            // Exemple d'utilisation
+            modifyTableCells('puis', 'nouveau texte');
         });
 });
