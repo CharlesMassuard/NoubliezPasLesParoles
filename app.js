@@ -5,8 +5,6 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
     const trackName = encodeURIComponent(searchQuery.split(' - ')[0]);
     const artistName = encodeURIComponent(searchQuery.split(' - ')[1]);
 
-    console.log('Track name:', trackName);
-
     fetch(`https://lrclib.net/api/search?track_name=${trackName}&artist_name=${artistName}`)
         .then(response => response.json())
         .then(data => {
@@ -14,6 +12,17 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             
             // Split the lyrics by both spaces and newlines
             const words = paroles.split(/\s+|\n/); // Split by space, multiple spaces, or newline
+
+            const longestWordLength = words.reduce((maxLength, word) => {
+                return Math.max(maxLength, word.length);
+            }, 0);
+
+            let texteDefautCell = "";
+            
+            for(let i = 0; i < longestWordLength; i++) {
+                texteDefautCell += "&#xA0;";
+            }
+
 
             // Créer la table
             const table = document.createElement('table');
@@ -39,16 +48,15 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             // Dictionnaire pour stocker les indices des mots
             let wordIndices = {};
 
-            words.forEach((word, index) => {
+            let numCol = 0;
+            let index = 0;
+            words.forEach((word) => {
                 // Créer une ligne et y ajouter un mot
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
-                cell.textContent = word;
-                cell.style.display = 'none'; // Masquer le mot initialement
+                cell.innerHTML = texteDefautCell;
                 cell.style.border = '1px solid black'; // Ajouter une bordure aux cellules
                 cell.style.padding = '5px'; // Ajouter du padding aux cellules
-
-                console.log('Word:', cell.textContent);
 
                 // Ajouter la ligne à la colonne actuelle
                 row.appendChild(cell);
@@ -58,7 +66,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                 if (!wordIndices[word]) {
                     wordIndices[word] = [];
                 }
-                wordIndices[word].push(index);
+                wordIndices[word].push([numCol, index]);
 
                 // Obtenir la hauteur réelle après l'ajout
                 const rowHeight = row.offsetHeight || 20; // Fallback si `offsetHeight` est 0
@@ -69,25 +77,23 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                     currentColumn = document.createElement('td');
                     firstRow.appendChild(currentColumn);
                     columnHeight = rowHeight; // Réinitialiser pour la nouvelle colonne
+                    numCol++;
+                    index = 0;
                 }
+                index++;
             });
-
-            console.log('wordIndices:', wordIndices);
 
             // Fonction pour afficher les cases du tableau en utilisant les indices
             function showTableCells(word) {
                 if (wordIndices[word]) {
-                    let tr = document.getElementById('firstRow');
-                    for (let i = 0; i < tr.children.length; i++) {
-                        let td = tr.children[i];
-                        for (let j = 0; j < td.children.length; j++) {
-                            let cell = td.children[j];
-                            if(cell.textContent === word) {
-                                cell.children[0].style.display = 'table-cell';
-                                console.log('FIIIIIIIIIIIIIND');
-                            }
-                        }
-                    }
+                    let firstTR = document.getElementById('firstRow');
+                    wordIndices[word].forEach((indices) => {
+                        let col = indices[0];
+                        let row = indices[1];
+                        let cell = firstTR.children[col].children[row];
+                        cell.children[0].style.display = 'table-cell';
+                        cell.children[0].textContent = word;
+                    });
                 }
             }
 
