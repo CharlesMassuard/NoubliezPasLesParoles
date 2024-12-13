@@ -5,11 +5,20 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
     const trackName = encodeURIComponent(searchQuery.split(' - ')[0]);
     const artistName = encodeURIComponent(searchQuery.split(' - ')[1]);
 
+    let motTrouves = [];
+
+    // Sélectionner l'élément avec l'ID 'divJeu'
+    const divJeu = document.getElementById('divJeu');
+
+    // Vérifier si l'élément existe et le supprimer
+    if (divJeu) {
+        divJeu.remove();
+    }
+
     fetch(`https://lrclib.net/api/search?track_name=${trackName}&artist_name=${artistName}`)
         .then(response => response.json())
         .then(data => {
             let paroles = data[0]["plainLyrics"];
-            
             // Split the lyrics by both spaces and newlines
             const words = paroles.split(/\s+|\n/); // Split by space, multiple spaces, or newline
 
@@ -24,6 +33,8 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             }
 
 
+            const divJeu = document.createElement('div');
+            divJeu.id = 'divJeu';
             // Créer la table
             const table = document.createElement('table');
             const tbody = document.createElement('tbody');
@@ -85,7 +96,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
             // Fonction pour afficher les cases du tableau en utilisant les indices
             function showTableCells(word) {
-                if (wordIndices[word]) {
+                if (wordIndices[word] && !motTrouves.includes(word)) {
                     let firstTR = document.getElementById('firstRow');
                     wordIndices[word].forEach((indices) => {
                         let col = indices[0];
@@ -93,6 +104,8 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                         let cell = firstTR.children[col].children[row];
                         cell.children[0].style.display = 'table-cell';
                         cell.children[0].textContent = word;
+                        wordToShowInput.value = '';
+                        motTrouves.push(word);
                     });
                 }
             }
@@ -102,17 +115,18 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             const wordToShowInput = document.createElement('input');
             wordToShowInput.setAttribute('type', 'text');
             wordToShowInput.setAttribute('placeholder', 'Mot à afficher');
-            const showButton = document.createElement('button');
-            showButton.textContent = 'Afficher le mot';
 
             inputContainer.appendChild(wordToShowInput);
-            inputContainer.appendChild(showButton);
             document.body.appendChild(inputContainer);
 
             // Ajouter un écouteur d'événement pour le bouton d'affichage
-            showButton.addEventListener('click', () => {
+            wordToShowInput.addEventListener('input', () => {
                 const wordToShow = wordToShowInput.value;
                 showTableCells(wordToShow);
             });
+
+            divJeu.appendChild(inputContainer);
+            divJeu.appendChild(table);
+            document.body.appendChild(divJeu);
         });
 });
