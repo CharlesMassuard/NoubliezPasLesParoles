@@ -7,10 +7,8 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
     let motTrouves = [];
 
-    // Sélectionner l'élément avec l'ID 'divJeu'
+    // Supprimer l'élément avec l'ID 'divJeu' s'il existe
     const divJeu = document.getElementById('divJeu');
-
-    // Vérifier si l'élément existe et le supprimer
     if (divJeu) {
         divJeu.remove();
     }
@@ -19,22 +17,21 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
         .then(response => response.json())
         .then(data => {
             let paroles = data[0]["plainLyrics"];
-            // Split the lyrics by both spaces and newlines
-            const words = paroles.split(/\s+|\n/); // Split by space, multiple spaces, or newline
+            let words = paroles.split(/\s+|\n/).map(word => word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ""));
+            words = words.filter(word => word.length > 0);
 
             const longestWordLength = words.reduce((maxLength, word) => {
                 return Math.max(maxLength, word.length);
             }, 0);
 
             let texteDefautCell = "";
-            
-            for(let i = 0; i < longestWordLength; i++) {
+            for (let i = 0; i < longestWordLength; i++) {
                 texteDefautCell += "&#xA0;";
             }
 
-
             const divJeu = document.createElement('div');
             divJeu.id = 'divJeu';
+
             // Créer la table
             const table = document.createElement('table');
             const tbody = document.createElement('tbody');
@@ -54,40 +51,48 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             tbody.appendChild(firstRow);
 
             let columnHeight = 0;
-            const maxHeight = window.innerHeight - 100; // Réduction pour tenir compte des marges
+            const maxHeight = window.innerHeight - 100;
 
-            // Dictionnaire pour stocker les indices des mots
+            // Fonction pour simplifier un mot (retirer les accents, ligatures, etc.)
+            function simplifyWord(word) {
+                return word
+                    .normalize('NFD') // Décomposer les caractères accentués
+                    .replace(/[\u0300-\u036f]/g, '') // Supprimer les diacritiques
+                    .replace(/œ/g, 'oe') // Remplacer ligature œ
+                    .toLowerCase(); // Mettre en minuscules
+            }
+
+            // Dictionnaire pour stocker les indices des mots (simplifiés) et leurs versions originales
             let wordIndices = {};
 
             let numCol = 0;
             let index = 0;
             words.forEach((word) => {
-                // Créer une ligne et y ajouter un mot
+                const simplifiedWord = simplifyWord(word); // Version simplifiée du mot
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
                 cell.innerHTML = texteDefautCell;
-                cell.style.border = '1px solid black'; // Ajouter une bordure aux cellules
-                cell.style.padding = '5px'; // Ajouter du padding aux cellules
+                cell.style.border = '1px solid black';
+                cell.style.padding = '5px';
 
-                // Ajouter la ligne à la colonne actuelle
                 row.appendChild(cell);
                 currentColumn.appendChild(row);
 
-                // Ajouter l'indice de la case au dictionnaire
-                if (!wordIndices[word]) {
-                    wordIndices[word] = [];
+                if (!wordIndices[simplifiedWord]) {
+                    wordIndices[simplifiedWord] = {
+                        originalWord: word, // Conserver la casse originale
+                        positions: []
+                    };
                 }
-                wordIndices[word].push([numCol, index]);
+                wordIndices[simplifiedWord].positions.push([numCol, index]);
 
-                // Obtenir la hauteur réelle après l'ajout
-                const rowHeight = row.offsetHeight || 20; // Fallback si `offsetHeight` est 0
+                const rowHeight = row.offsetHeight || 20;
                 columnHeight += rowHeight;
 
-                // Si la hauteur dépasse l'écran, on commence une nouvelle colonne
                 if (columnHeight > maxHeight) {
                     currentColumn = document.createElement('td');
                     firstRow.appendChild(currentColumn);
-                    columnHeight = rowHeight; // Réinitialiser pour la nouvelle colonne
+                    columnHeight = rowHeight;
                     numCol++;
                     index = 0;
                 }
@@ -96,24 +101,18 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
             // Fonction pour afficher les cases du tableau en utilisant les indices
             function showTableCells(word) {
-                const lowerCaseWord = word.toLowerCase();
-                const lowerCaseWordIndices = Object.keys(wordIndices).reduce((acc, key) => {
-                    acc[key.toLowerCase()] = key;
-                    return acc;
-                }, {});
-
-                if (lowerCaseWordIndices[lowerCaseWord] && !motTrouves.includes(lowerCaseWord)) {
-                    const originalWord = lowerCaseWordIndices[lowerCaseWord];
-                    let firstTR = document.getElementById('firstRow');
-                    wordIndices[originalWord].forEach((indices) => {
-                        let col = indices[0];
-                        let row = indices[1];
-                        let cell = firstTR.children[col].children[row];
+                const simplifiedWord = simplifyWord(word); // Simplifier la saisie de l'utilisateur
+                if (wordIndices[simplifiedWord] && !motTrouves.includes(simplifiedWord)) {
+                    const originalWord = wordIndices[simplifiedWord].originalWord; // Récupérer la version originale
+                    wordIndices[simplifiedWord].positions.forEach((indices) => {
+                        const col = indices[0];
+                        const row = indices[1];
+                        const cell = firstRow.children[col].children[row];
                         cell.children[0].style.display = 'table-cell';
-                        cell.children[0].textContent = originalWord;
-                        wordToShowInput.value = '';
-                        motTrouves.push(lowerCaseWord);
+                        cell.children[0].textContent = originalWord; // Affiche le mot original avec la bonne casse
                     });
+                    wordToShowInput.value = '';
+                    motTrouves.push(simplifiedWord);
                 }
             }
 
@@ -126,7 +125,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             inputContainer.appendChild(wordToShowInput);
             document.body.appendChild(inputContainer);
 
-            // Ajouter un écouteur d'événement pour le bouton d'affichage
+            // Ajouter un écouteur d'événement pour le champ d'entrée
             wordToShowInput.addEventListener('input', () => {
                 const wordToShow = wordToShowInput.value;
                 showTableCells(wordToShow);
