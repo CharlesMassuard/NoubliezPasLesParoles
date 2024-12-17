@@ -25,7 +25,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             }, 0);
 
             let texteDefautCell = "";
-            for (let i = 0; i < longestWordLength; i++) {
+            for (let i = 0; i < longestWordLength+5; i++) {
                 texteDefautCell += "&#xA0;";
             }
 
@@ -37,11 +37,6 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             const tbody = document.createElement('tbody');
             table.appendChild(tbody);
             document.body.appendChild(table);
-
-            // Appliquer les styles pour centrer le tableau et ajouter des bordures
-            table.style.margin = '0 auto';
-            table.style.borderCollapse = 'collapse';
-            table.style.width = '80%';
 
             // Initialisation des variables pour gérer les colonnes
             let currentColumn = document.createElement('td');
@@ -72,8 +67,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
                 cell.innerHTML = texteDefautCell;
-                cell.style.border = '1px solid black';
-                cell.style.padding = '5px';
+                cell.classList.add('cellJeu');
 
                 row.appendChild(cell);
                 currentColumn.appendChild(row);
@@ -109,7 +103,13 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                         const row = indices[1];
                         const cell = firstRow.children[col].children[row];
                         cell.children[0].style.display = 'table-cell';
+                        cell.children[0].style.backgroundColor = 'rgb(16, 197, 0)';
                         cell.children[0].textContent = originalWord; // Affiche le mot original avec la bonne casse
+
+                        //remettre le background par défaut
+                        setTimeout(() => {
+                            cell.children[0].style.backgroundColor = '';
+                        }, 1000);
                     });
                     wordToShowInput.value = '';
                     motTrouves.push(simplifiedWord);
