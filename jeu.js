@@ -111,21 +111,22 @@ document.getElementById('rechercherParoles').addEventListener('click', function(
                             if (cellRow && cellRow.firstChild) {
                                 const cell = cellRow.firstChild;
                                 cell.style.display = 'table-cell';
-                                if (lost)
+                                if (lost){
                                     cell.style.backgroundColor = 'rgba(255, 0, 0, 0.38)';
-                                else
+                                }else{
                                     cell.style.backgroundColor = 'rgb(16, 197, 0)';
+                                    total_mots_trouves++;
+                                    // Remettre le fond par défaut après un délai
+                                    setTimeout(() => {
+                                        cell.style.backgroundColor = '';
+                                    }, 1000);
+                                }
                                 cell.textContent = originalWord; // Affiche le mot original avec la bonne casse
-                                total_mots_trouves++;
-            
-                                // Remettre le fond par défaut après un délai
-                                setTimeout(() => {
-                                    cell.style.backgroundColor = '';
-                                }, 1000);
+    
                             }
                         }
                     });
-            
+                    
                     wordToShowInput.value = '';
                     motTrouves.push(simplifiedWord);
                     text_mot.innerHTML = total_mots_trouves + "/" + nbr_mots + " paroles trouvées";
