@@ -1,9 +1,7 @@
-document.getElementById('searchForm').addEventListener('submit', function(event) {
+document.getElementById('rechercherParoles').addEventListener('click', function(event) {
     event.preventDefault(); // Empêche la soumission du formulaire
-
-    const searchQuery = event.target.search.value;
-    const trackName = encodeURIComponent(searchQuery.split(' - ')[0]);
-    const artistName = encodeURIComponent(searchQuery.split(' - ')[1]);
+    const trackName = encodeURIComponent(document.getElementById('searchInputSon').value);
+    const artistName = encodeURIComponent(document.getElementById('searchInputArtiste').value);
 
     let motTrouves = [];
     let total_mots_trouves = 0;
@@ -98,7 +96,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             });
 
             // Fonction pour afficher les cases du tableau en utilisant les indices
-            function showTableCells(word) {
+            function showTableCells(word, lost=false) {
                 const simplifiedWord = simplifyWord(word); // Simplifier la saisie de l'utilisateur
                 if (wordIndices[simplifiedWord] && !motTrouves.includes(simplifiedWord)) {
                     const originalWord = wordIndices[simplifiedWord].originalWord; // Récupérer la version originale
@@ -113,7 +111,10 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                             if (cellRow && cellRow.firstChild) {
                                 const cell = cellRow.firstChild;
                                 cell.style.display = 'table-cell';
-                                cell.style.backgroundColor = 'rgb(16, 197, 0)';
+                                if (lost)
+                                    cell.style.backgroundColor = 'rgba(255, 0, 0, 0.38)';
+                                else
+                                    cell.style.backgroundColor = 'rgb(16, 197, 0)';
                                 cell.textContent = originalWord; // Affiche le mot original avec la bonne casse
                                 total_mots_trouves++;
             
@@ -141,7 +142,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             buttonVoirAllParoles.innerHTML = "Voir toutes les paroles";
             buttonVoirAllParoles.addEventListener('click', () => {
                 words.forEach((word) => {
-                    showTableCells(word);
+                    showTableCells(word, true);
                 });
             });
 
@@ -163,4 +164,22 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             divJeu.appendChild(table);
             document.body.appendChild(divJeu);
         });
+});
+
+document.getElementById("searchInputSon").addEventListener("keyup", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        let searchInputArtiste = document.getElementById("searchInputArtiste");
+        searchInputArtiste.focus();
+        if(searchInputArtiste.value.length > 0){
+            searchInputArtiste.setSelectionRange(0, searchInputArtiste.value.length);
+        }
+    }
+});
+
+document.getElementById("searchInputArtiste").addEventListener("keyup", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        rechercherParoles.click();
+    }
 });
