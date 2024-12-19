@@ -6,6 +6,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
     const artistName = encodeURIComponent(searchQuery.split(' - ')[1]);
 
     let motTrouves = [];
+    let total_mots_trouves = 0;
 
     // Supprimer l'élément avec l'ID 'divJeu' s'il existe
     const divJeu = document.getElementById('divJeu');
@@ -16,8 +17,9 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
     fetch(`https://lrclib.net/api/search?track_name=${trackName}&artist_name=${artistName}`)
         .then(response => response.json())
         .then(data => {
-            let paroles = data[0]["plainLyrics"];
-            let words = paroles.split(/\s+|\n/).map(word => word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ""));
+            let paroles = data[0]["plainLyrics"];   
+            let words = paroles.split(/\s+|\n/).map(word => word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()]/g, ""));
+            nbr_mots = words.length;
             words = words.filter(word => word.length > 0);
 
             const longestWordLength = words.reduce((maxLength, word) => {
@@ -25,7 +27,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             }, 0);
 
             let texteDefautCell = "";
-            for (let i = 0; i < longestWordLength+5; i++) {
+            for (let i = 0; i < longestWordLength+7; i++) {
                 texteDefautCell += "&#xA0;";
             }
 
@@ -63,14 +65,23 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             let numCol = 0;
             let index = 0;
             words.forEach((word) => {
+                
                 const simplifiedWord = simplifyWord(word); // Version simplifiée du mot
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
+
+                const rowHeight = row.offsetHeight || 20;
+                columnHeight += rowHeight;
+                if (columnHeight > maxHeight) {
+                    currentColumn = document.createElement('td');
+                    firstRow.appendChild(currentColumn);
+                    columnHeight = rowHeight;
+                    numCol++;
+                    index = 0;
+                }
+
                 cell.innerHTML = texteDefautCell;
                 cell.classList.add('cellJeu');
-
-                row.appendChild(cell);
-                currentColumn.appendChild(row);
 
                 if (!wordIndices[simplifiedWord]) {
                     wordIndices[simplifiedWord] = {
@@ -79,18 +90,11 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                     };
                 }
                 wordIndices[simplifiedWord].positions.push([numCol, index]);
-
-                const rowHeight = row.offsetHeight || 20;
-                columnHeight += rowHeight;
-
-                if (columnHeight > maxHeight) {
-                    currentColumn = document.createElement('td');
-                    firstRow.appendChild(currentColumn);
-                    columnHeight = rowHeight;
-                    numCol++;
-                    index = 0;
-                }
+                row.appendChild(cell);
+                currentColumn.appendChild(row);
+                columnHeight += rowHeight; // Mettre à jour la hauteur de la colonne
                 index++;
+
             });
 
             // Fonction pour afficher les cases du tableau en utilisant les indices
@@ -99,30 +103,53 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
                 if (wordIndices[simplifiedWord] && !motTrouves.includes(simplifiedWord)) {
                     const originalWord = wordIndices[simplifiedWord].originalWord; // Récupérer la version originale
                     wordIndices[simplifiedWord].positions.forEach((indices) => {
-                        const col = indices[0];
-                        const row = indices[1];
-                        const cell = firstRow.children[col].children[row];
-                        cell.children[0].style.display = 'table-cell';
-                        cell.children[0].style.backgroundColor = 'rgb(16, 197, 0)';
-                        cell.children[0].textContent = originalWord; // Affiche le mot original avec la bonne casse
-
-                        //remettre le background par défaut
-                        setTimeout(() => {
-                            cell.children[0].style.backgroundColor = '';
-                        }, 1000);
+                        const colIndex = indices[0];
+                        const rowIndex = indices[1];
+            
+                        // Vérifier si la colonne et la ligne existent avant d'accéder
+                        const column = firstRow.children[colIndex];
+                        if (column) {
+                            const cellRow = column.children[rowIndex];
+                            if (cellRow && cellRow.firstChild) {
+                                const cell = cellRow.firstChild;
+                                cell.style.display = 'table-cell';
+                                cell.style.backgroundColor = 'rgb(16, 197, 0)';
+                                cell.textContent = originalWord; // Affiche le mot original avec la bonne casse
+                                total_mots_trouves++;
+            
+                                // Remettre le fond par défaut après un délai
+                                setTimeout(() => {
+                                    cell.style.backgroundColor = '';
+                                }, 1000);
+                            }
+                        }
                     });
+            
                     wordToShowInput.value = '';
                     motTrouves.push(simplifiedWord);
+                    text_mot.innerHTML = total_mots_trouves + "/" + nbr_mots + " paroles trouvées";
                 }
             }
+            
 
             // Ajouter le champ de saisie pour le mot à afficher
             const inputContainer = document.createElement('div');
             const wordToShowInput = document.createElement('input');
             wordToShowInput.setAttribute('type', 'text');
             wordToShowInput.setAttribute('placeholder', 'Mot à afficher');
+            const buttonVoirAllParoles = document.createElement('button');
+            buttonVoirAllParoles.innerHTML = "Voir toutes les paroles";
+            buttonVoirAllParoles.addEventListener('click', () => {
+                words.forEach((word) => {
+                    showTableCells(word);
+                });
+            });
+
+            let text_mot = document.createElement('p');
+            text_mot.innerHTML = "0/" + nbr_mots + " paroles trouvées";
 
             inputContainer.appendChild(wordToShowInput);
+            inputContainer.appendChild(buttonVoirAllParoles);
             document.body.appendChild(inputContainer);
 
             // Ajouter un écouteur d'événement pour le champ d'entrée
@@ -132,6 +159,7 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
             });
 
             divJeu.appendChild(inputContainer);
+            divJeu.appendChild(text_mot);
             divJeu.appendChild(table);
             document.body.appendChild(divJeu);
         });
