@@ -138,6 +138,7 @@ document.getElementById('rechercherParoles').addEventListener('click', function(
             const wordToShowInput = document.createElement('input');
             wordToShowInput.setAttribute('type', 'text');
             wordToShowInput.setAttribute('placeholder', 'Mot à afficher');
+            wordToShowInput.id = "wordToShowInput";
             const buttonVoirAllParoles = document.createElement('button');
             buttonVoirAllParoles.innerHTML = "Voir toutes les paroles";
             buttonVoirAllParoles.addEventListener('click', () => {
@@ -163,6 +164,7 @@ document.getElementById('rechercherParoles').addEventListener('click', function(
             divJeu.appendChild(text_mot);
             divJeu.appendChild(table);
             document.body.appendChild(divJeu);
+            document.getElementById('wordToShowInput').focus();
         });
 });
 
@@ -175,11 +177,33 @@ document.getElementById("searchInputSon").addEventListener("keyup", function(eve
             searchInputArtiste.setSelectionRange(0, searchInputArtiste.value.length);
         }
     }
+    if (event.key === "ArrowRight") {
+        const cursorPosition = this.selectionStart;
+        if (cursorPosition === this.value.length && wasAtEnd) {
+            event.preventDefault();
+            const searchInputArtiste = document.getElementById("searchInputArtiste");
+            searchInputArtiste.focus();
+        }
+        wasAtEnd = cursorPosition === this.value.length;
+    } else {
+        wasAtEnd = false;
+    }
 });
 
 document.getElementById("searchInputArtiste").addEventListener("keyup", function(event) {
     if (event.key === "Enter") {
         event.preventDefault();
         rechercherParoles.click();
+    }
+    if (event.key === "ArrowLeft") {
+        const cursorPosition = this.selectionStart;
+        if (cursorPosition === 0 && wasAtStart) {
+            event.preventDefault();
+            const searchInputSon = document.getElementById("searchInputSon");
+            searchInputSon.focus();
+        }
+        wasAtStart = cursorPosition === 0;
+    } else {
+        wasAtStart = false;
     }
 });
